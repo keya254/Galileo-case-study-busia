@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Dict
 
-from .anysat import AnySatWrapper
+try:
+    from .anysat import AnySatWrapper
+except ModuleNotFoundError:  # the anysat model code is not shipped in this repo
+    AnySatWrapper = None  # type: ignore
 from .croma import CROMAWrapper
 from .decur import DeCurWrapper
 from .dofa import DOFAWrapper

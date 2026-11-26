@@ -1,4 +1,8 @@
-from .baseline_models.anysat import AnySatBinaryCropHarvestEval, AnySatNormalizer
+try:
+    from .baseline_models.anysat import AnySatBinaryCropHarvestEval, AnySatNormalizer
+except ModuleNotFoundError:  # the anysat model code is not shipped in this repo
+    AnySatBinaryCropHarvestEval = None  # type: ignore
+    AnySatNormalizer = None  # type: ignore
 from .baseline_models.presto import PrestoBinaryCropHarvestEval, PrestoNormalizer
 from .cropharvest.cropharvest_eval import BinaryCropHarvestEval, MultiClassCropHarvestEval
 from .datasets.breizhcrops import BreizhCropsDataset
