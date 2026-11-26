@@ -57,3 +57,7 @@ data/cropharvest_data/
 !data/busia/README.md
 !diagrams/*.png
 !case_study/expected_outputs/*.png
+
+# MVP runtime cache and shipped model artifacts
+mvp_data/
+!mvp/assets/maize_classifier.joblib

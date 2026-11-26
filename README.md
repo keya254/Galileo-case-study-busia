@@ -41,6 +41,19 @@ conda activate galileo-gfm
 Everything participants generate (`outputs/`, `data/busia/*.tif`, the CropHarvest download in
 `data/cropharvest_data/`) is excluded from git.
 
+## Web MVP
+
+`mvp/` is a shippable demo built on the case study: a Leaflet map with place search, polygon
+drawing and an analysis period. It returns maize probability, acreage, confidence and an
+insurance proxy, caches every analysis, and shows change over time for the same area.
+
+- Cached Busia 2019 tile: instant.
+- Any other area/period: on-demand Sentinel export from Earth Engine, then frozen Galileo +
+  the saved maize classifier.
+- Run: `cd mvp && cp .env.example .env` (set `EE_PROJECT` and `EE_BUCKET`), then
+  `docker compose up --build`, open http://localhost:8000.
+- Details: [mvp/README.md](mvp/README.md).
+
 ## About Galileo
 
 Galileo is a family of pretrained remote sensing models developed by NASA Harvest, Ai2, McGill

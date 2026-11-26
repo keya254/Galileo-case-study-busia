@@ -1,0 +1,17 @@
+services:
+  mvp:
+    build:
+      context: ..
+      dockerfile: mvp/Dockerfile
+    image: galileo-crop-mvp
+    ports:
+      - "8000:8000"
+    environment:
+      EE_PROJECT: ${EE_PROJECT:-}
+      EE_BUCKET: ${EE_BUCKET:-}
+      MVP_MAX_AREA_KM2: ${MVP_MAX_AREA_KM2:-9}
+      MVP_BATCH_SIZE: ${MVP_BATCH_SIZE:-256}
+    volumes:
+      - ./mvp_data:/app/mvp_data
+      - ${HOME}/.config/earthengine:/root/.config/earthengine:ro
+    restart: unless-stopped

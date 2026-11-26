@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Galileo Crop Intelligence - Busia demo</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <header>
+          <div class="brand">
+            <span class="logo">G</span>
+            <div>
+              <h1>Galileo Crop Intelligence</h1>
+              <p class="sub">Maize probability, acreage and risk - Busia demo</p>
+            </div>
+          </div>
+        </header>
+
+        <section class="search">
+          <label for="q">Find a place</label>
+          <div class="search-row">
+            <input id="q" type="search" placeholder="e.g. Busia, Kenya" autocomplete="off" />
+            <button id="searchBtn" title="Search">Search</button>
+          </div>
+          <ul id="results" class="results" hidden></ul>
+        </section>
+
+        <section class="period">
+          <label for="startDate">Analysis period</label>
+          <div class="dates">
+            <input id="startDate" type="date" value="2019-01-01" />
+            <span>to</span>
+            <input id="endDate" type="date" value="2019-12-31" />
+          </div>
+          <div id="quickYears" class="quick-years"></div>
+          <p class="hint small">
+            2019 in the Busia demo tile is cached. Any other area/period is exported from
+            Sentinel on demand (full crop year required).
+          </p>
+        </section>
+
+        <section class="actions">
+          <button id="demoBtn" class="primary">Analyze demo area</button>
+          <button id="viewBtn">Analyze current view</button>
+          <button id="clearBtn" class="ghost">Clear</button>
+        </section>
+
+        <p class="hint">
+          Draw a polygon or rectangle with the tools on the map, search a place, or analyze the
+          current map view.
+        </p>
+
+        <div id="status" class="status" hidden></div>
+
+        <section id="output" class="output" hidden>
+          <div id="periodBadge" class="period-badge"></div>
+          <div class="cards">
+            <div class="card wide">
+              <div class="label">Mean maize probability</div>
+              <div class="value" id="meanProb">-</div>
+              <div class="bar"><span id="probBar"></span></div>
+            </div>
+            <div class="card">
+              <div class="label">Maize area</div>
+              <div class="value" id="maizeHa">-</div>
+              <div class="unit" id="maizeAcres"></div>
+            </div>
+            <div class="card">
+              <div class="label">Mapped area</div>
+              <div class="value" id="mappedHa">-</div>
+              <div class="unit" id="mappedAcres"></div>
+            </div>
+            <div class="card">
+              <div class="label">Share maize (&gt; 0.5)</div>
+              <div class="value" id="shareStrict">-</div>
+              <div class="unit" id="shareCutoff"></div>
+            </div>
+            <div class="card">
+              <div class="label">Confidence</div>
+              <div class="value" id="confidence">-</div>
+              <div class="unit" id="coverage"></div>
+            </div>
+            <div class="card wide risk" id="insuranceCard">
+              <div class="label">Insurance proxy</div>
+              <div class="value" id="insuranceScore">-</div>
+              <div class="unit" id="insuranceBand"></div>
+              <div class="unit small" id="insuranceNote"></div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <span>Maize probability</span>
+            <div class="gradient"></div>
+            <div class="scale"><span>0</span><span>0.5</span><span>1</span></div>
+          </div>
+          <p class="fineprint">
+            Indicative only. The model confuses maize with other crops; use field checks before
+            decisions. Demo coverage: Busia, Kenya (3 x 3 km). On-demand runs use Sentinel via
+            Earth Engine.
+          </p>
+        </section>
+
+        <section id="historySection" class="history" hidden>
+          <h2>History for this area</h2>
+          <div id="changeSummary" class="change-summary"></div>
+          <div id="historyChart" class="chart"></div>
+          <ul id="historyList" class="history-list"></ul>
+        </section>
+      </aside>
+
+      <main>
+        <div id="map"></div>
+        <label class="overlay-toggle">
+          <input type="checkbox" id="showOverlay" />
+          Show full probability layer
+        </label>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
