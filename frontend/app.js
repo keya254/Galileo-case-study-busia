@@ -159,23 +159,31 @@ async function pollJob(jobId) {
   const started = Date.now();
   state.polling = true;
   let lastMessage = "";
+  let transientFailures = 0;
   while (state.polling) {
     await sleep(2000);
     try {
       const response = await fetch(`/api/jobs/${jobId}`);
-      const text = await response.text();
-      let job;
-      try {
-        job = JSON.parse(text);
-      } catch {
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        transientFailures += 1;
+        if (transientFailures <= 10) {
+          setStatus(
+            `Tunnel hiccup (${response.status}); retrying... (${transientFailures}/10)`,
+            "loading"
+          );
+          continue;
+        }
         state.polling = false;
         setStatus(
-          `Job endpoint returned ${response.status} ${response.headers.get("content-type") || ""} ` +
-            "instead of JSON. Rebuild the container and hard-refresh.",
+          `Job endpoint returned ${response.status} ${contentType} instead of JSON after ` +
+            `${transientFailures} attempts. Check the tunnel/proxy is forwarding /api to the container.`,
           "error"
         );
         return;
       }
+      transientFailures = 0;
+      const job = await response.json();
       if (!response.ok) {
         setStatus(job.detail || "Job not found.", "error");
         state.polling = false;
@@ -200,8 +208,14 @@ async function pollJob(jobId) {
         return;
       }
     } catch (error) {
+      transientFailures += 1;
+      if (transientFailures <= 10) {
+        setStatus(`Connection hiccup; retrying... (${transientFailures}/10)`, "loading");
+        continue;
+      }
       state.polling = false;
       setStatus(`Job polling failed: ${error.message}`, "error");
+      return;
     }
   }
 }
