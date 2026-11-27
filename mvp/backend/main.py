@@ -58,6 +58,14 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def frontend_cache_headers(request, call_next):
+    response = await call_next(request)
+    if request.url.path in ("/", "/index.html", "/app.js", "/style.css"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
+
 class AnalyzeRequest(BaseModel):
     geometry: dict = Field(..., description="GeoJSON Polygon/MultiPolygon in EPSG:4326")
     start: str | None = Field(None, description="Start date YYYY-MM-DD (default 2019-01-01)")
@@ -481,6 +489,12 @@ def analysis_overlay(aoi: str, period: str) -> FileResponse:
     if not path.exists():
         raise HTTPException(status_code=404, detail="Overlay not found")
     return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+def api_not_found(path: str) -> dict:
+    """Always answer unmatched /api paths with JSON, never the frontend HTML."""
+    raise HTTPException(status_code=404, detail="API route not found")
 
 
 app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="static")

@@ -93,12 +93,17 @@ function shortPeriod(result) {
 }
 
 function getPeriod() {
-  return { start: $("startDate").value, end: $("endDate").value };
+  const start = $("startDate")?.value || "2019-01-01";
+  const end = $("endDate")?.value || "2019-12-31";
+  if (!start || !end) throw new Error("Choose a start and end date.");
+  return { start, end };
 }
 
 function setPeriod(start, end) {
-  $("startDate").value = start;
-  $("endDate").value = end;
+  const startEl = $("startDate");
+  const endEl = $("endDate");
+  if (startEl) startEl.value = start;
+  if (endEl) endEl.value = end;
 }
 
 /* ---------------------------- analysis ---------------------------- */
@@ -121,7 +126,19 @@ async function analyzeGeometry(geometry) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ geometry, start: period.start, end: period.end }),
     });
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      resultLayer.clearLayers();
+      setStatus(
+        `Server returned ${response.status} ${response.headers.get("content-type") || ""} instead of JSON. ` +
+          "Rebuild the container and hard-refresh the browser.",
+        "error"
+      );
+      return;
+    }
     if (!response.ok) {
       resultLayer.clearLayers();
       setStatus(data.detail || "Analysis failed.", "error");
@@ -146,7 +163,19 @@ async function pollJob(jobId) {
     await sleep(2000);
     try {
       const response = await fetch(`/api/jobs/${jobId}`);
-      const job = await response.json();
+      const text = await response.text();
+      let job;
+      try {
+        job = JSON.parse(text);
+      } catch {
+        state.polling = false;
+        setStatus(
+          `Job endpoint returned ${response.status} ${response.headers.get("content-type") || ""} ` +
+            "instead of JSON. Rebuild the container and hard-refresh.",
+          "error"
+        );
+        return;
+      }
       if (!response.ok) {
         setStatus(job.detail || "Job not found.", "error");
         state.polling = false;
@@ -431,6 +460,7 @@ function sleep(ms) {
 
 function buildQuickYears() {
   const container = $("quickYears");
+  if (!container) return;
   container.replaceChildren();
   for (let year = 2019; year <= 2024; year += 1) {
     const button = document.createElement("button");
