@@ -6,9 +6,13 @@ task, download the GeoTIFF from a staging bucket, then remove the staged object.
 Configuration (environment variables):
     EE_PROJECT  Earth Engine / Google Cloud project id (required for on-demand mode)
     EE_BUCKET   GCS bucket used to stage exports (created on first use if missing)
+    EE_CREDENTIALS_JSON
+                Optional one-line contents of the `earthengine authenticate` credentials
+                JSON. Useful on cloud platforms where the host credentials file is not
+                mounted. Used in memory; no file is written.
 
-The credentials are the same ones created by `earthengine authenticate` (mounted into the
-container in docker-compose). For production, use a dedicated service account and bucket.
+The credentials are the same ones created by `earthengine authenticate`. For production, use a
+dedicated service account and bucket.
 """
 
 from __future__ import annotations
@@ -47,6 +51,25 @@ _INIT_LOCK = threading.Lock()
 _INITIALIZED: set[str] = set()
 
 
+def _credentials_from_env():
+    """Build google-auth credentials from EE_CREDENTIALS_JSON, if provided."""
+    raw = os.getenv("EE_CREDENTIALS_JSON", "").strip()
+    if not raw:
+        return None
+    from ee.oauth import CLIENT_ID, CLIENT_SECRET, SCOPES, TOKEN_URI
+    from google.oauth2.credentials import Credentials
+
+    data = json.loads(raw)
+    return Credentials(
+        token=None,
+        refresh_token=data.get("refresh_token"),
+        token_uri=TOKEN_URI,
+        client_id=data.get("client_id", CLIENT_ID),
+        client_secret=data.get("client_secret", CLIENT_SECRET),
+        scopes=data.get("scopes", SCOPES),
+    )
+
+
 def project() -> str:
     value = os.getenv("EE_PROJECT", "").strip()
     if not value:
@@ -72,24 +95,31 @@ def init_ee() -> None:
     with _INIT_LOCK:
         if proj in _INITIALIZED:
             return
-        ee.Initialize(project=proj)
+        creds = _credentials_from_env()
+        if creds is not None:
+            ee.Initialize(credentials=creds, project=proj)
+        else:
+            ee.Initialize(project=proj)
         _INITIALIZED.add(proj)
 
 
 def _access_token() -> str:
-    from ee.oauth import TOKEN_URI, get_credentials_arguments
     from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
 
-    args = get_credentials_arguments()
-    creds = Credentials(
-        token=None,
-        refresh_token=args["refresh_token"],
-        token_uri=TOKEN_URI,
-        client_id=args["client_id"],
-        client_secret=args["client_secret"],
-        scopes=args["scopes"],
-    )
+    creds = _credentials_from_env()
+    if creds is None:
+        from ee.oauth import TOKEN_URI, get_credentials_arguments
+        from google.oauth2.credentials import Credentials
+
+        args = get_credentials_arguments()
+        creds = Credentials(
+            token=None,
+            refresh_token=args["refresh_token"],
+            token_uri=TOKEN_URI,
+            client_id=args["client_id"],
+            client_secret=args["client_secret"],
+            scopes=args["scopes"],
+        )
     creds.refresh(Request())
     return creds.token
 
