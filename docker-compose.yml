@@ -12,6 +12,7 @@ services:
       MVP_BATCH_SIZE: ${MVP_BATCH_SIZE:-256}
     volumes:
       - ./mvp_data:/app/mvp_data
-      # Local development only. On a cloud platform use EE_CREDENTIALS_JSON instead.
-      - ${HOME}/.config/earthengine:/root/.config/earthengine:ro
+      # Credentials are provided with EE_CREDENTIALS_JSON. To use a host credentials
+      # file instead, uncomment:
+      # - ${HOME}/.config/earthengine:/root/.config/earthengine:ro
     restart: unless-stopped

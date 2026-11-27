@@ -17,11 +17,16 @@ data are not included.
 ## Run with Docker
 
 ```bash
-cp .env.example .env    # set EE_PROJECT and EE_BUCKET
+cp .env.example .env    # set EE_PROJECT, EE_BUCKET and EE_CREDENTIALS_JSON
 docker compose up --build
 ```
 
 Open http://localhost:8000.
+
+`EE_CREDENTIALS_JSON` is the contents of your local `~/.config/earthengine/credentials`
+(one line). The app writes it to `~/.config/earthengine/credentials` inside the container.
+The Compose file does not mount host credentials by default; if you prefer that, uncomment the
+mount line in `docker-compose.yml`.
 
 ## Deploy to a cloud platform
 
